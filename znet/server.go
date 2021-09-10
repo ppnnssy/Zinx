@@ -17,13 +17,25 @@ type Server struct {
 	IP string
 	//服务器监听的端口
 	Port int
-	//添加一个Router对象
-	Router ziface.IRouter
+	//当前server的消息管理模块，用来绑定msgId对应的处理业务api
+	MsgHandle ziface.IMsgHandle
+}
+
+//提供一个初始化Server模块的方法(工厂模式）
+func NewServer(name string) *Server {
+	s := &Server{
+		Name:      utils.GlobalObject.Name,
+		IPVersion: "tcp4",
+		IP:        utils.GlobalObject.Host,
+		Port:      utils.GlobalObject.TcpPort,
+		MsgHandle: NewMsgHandle(),
+	}
+	return s
 }
 
 //给当前的服务注册一个路由方法，供当前的客户端链接使用
-func (s *Server) AddRouter(router ziface.IRouter) {
-	s.Router = router
+func (s *Server) AddRouter(msgID uint32, router ziface.IRouter) {
+	s.MsgHandle.AddRouter(msgID, router)
 	fmt.Println("Add Router Success")
 }
 
@@ -68,7 +80,7 @@ func (s *Server) Start() {
 
 			//到此为止客户端已经建立连接，做一些业务。暂时做一个最基本的最大512字节的回显业务
 			//初始化链接，绑定链接conn和业务CallBackToClient
-			dealConn := NewConnection(conn, cid, s.Router)
+			dealConn := NewConnection(conn, cid, s.MsgHandle)
 			cid++
 
 			//启动当前的链接业务
@@ -93,16 +105,4 @@ func (s *Server) Server() {
 
 	//因为Start（）所有的服务都在go中执行，main进程结束后go也会提前结束，所以需要阻塞一下主进程
 	select {}
-}
-
-//提供一个初始化Server模块的方法(工厂模式）
-func NewServer(name string) *Server {
-	s := &Server{
-		Name:      utils.GlobalObject.Name,
-		IPVersion: "tcp4",
-		IP:        utils.GlobalObject.Host,
-		Port:      utils.GlobalObject.TcpPort,
-		Router:    nil, //先默认为空，实际项目中调用自己重写的路由方法
-	}
-	return s
 }

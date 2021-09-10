@@ -2,6 +2,9 @@ package znet
 
 import "zinxProject/ziface"
 
+/*
+封装消息和链接
+*/
 type Request struct {
 	Conn ziface.IConnection //这个属性是一个接口
 	msg  ziface.IMessage

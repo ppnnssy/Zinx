@@ -25,7 +25,7 @@ var GlobalObject *GlobalObj
 
 //从Zinx。Json文件中读取配置参数
 func (g *GlobalObj) Reload() {
-	data, err := ioutil.ReadFile("myDemo\\Zinx V0.5\\conf\\zinx.json")
+	data, err := ioutil.ReadFile("myDemo\\Zinx V0.6\\conf\\zinx.json")
 	if err != nil {
 		panic(err)
 	}
