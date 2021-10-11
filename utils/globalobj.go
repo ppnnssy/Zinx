@@ -54,7 +54,6 @@ func init() {
 	}
 
 	//尝试加载自定义的值
-
 	GlobalObject.Reload()
 
 }

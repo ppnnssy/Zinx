@@ -46,11 +46,26 @@ func DoConnBegin(conn ziface.IConnection) {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	//给当前的链接设置一些属性
+	fmt.Println("Set conn Name...")
+	conn.SetProperty("Name", "冰冰的小圆脸")
+	conn.SetProperty("git Addr", "https://github.com/ppnnssy/Zinx.git")
+
 }
 
 func DoConnLost(conn ziface.IConnection) {
 	fmt.Println("===>DoConnLost is Called!...")
 	fmt.Println("connId:", conn.GetConnID(), "is lost!")
+
+	//结束时获取一下链接属性
+	if name, err := conn.GetProperty("Name"); err == nil {
+		fmt.Println("Name:", name)
+	}
+	if add, err := conn.GetProperty("git Addr"); err == nil {
+		fmt.Println("add:", add)
+	}
+
 }
 func main() {
 	//创建一个server句柄，使用Zinx的api

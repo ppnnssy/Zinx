@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync"
 	"zinxProject/utils"
 	"zinxProject/ziface"
 )
@@ -13,24 +14,23 @@ type Connection struct {
 	//以后框架变大了之后会有多个服务器，所以需要一个属性判断当前链接属于哪个server
 	//目前可以通过本字段访问connManager 本条注释会写多次因为我记不住
 	TcpServer ziface.IServer
-
 	//绑定的链接
 	Conn *net.TCPConn
-
 	//链接ID
 	ConnID uint32
-
 	//当前链接的状态
 	IsClosed bool
-
 	//告知当前链接已经停止/退出
 	ExitChan chan bool
-
 	//消息管理MsgId和对应的业务处理API
 	MsgHandle ziface.IMsgHandle
-
 	//添加一个无缓冲的管道，用于读写之间的通信
 	MsgChan chan []byte
+	//链接属性集合string可以是链接名，空接口可以是任何属性
+	property map[string]interface{}
+
+	//保护链接属性的锁
+	protectLock sync.RWMutex
 }
 
 //初始化链接模块的方法
@@ -45,9 +45,10 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgH
 		IsClosed:  false,
 		ExitChan:  make(chan bool, 1),
 		MsgChan:   make(chan []byte),
+		property:  make(map[string]interface{}),
 	}
 
-	c.TcpServer.GetConnMgr().Add(c)
+	c.TcpServer.GetConnMgr().Add(c) //有种左脚踩右脚的感觉
 
 	return c
 }
@@ -66,13 +67,6 @@ func (c *Connection) StartReader() {
 	defer c.Stop()
 
 	for {
-		//buf:=make([]byte,utils.GlobalObject.MaxPackageSize)
-		//_,err:=c.Conn.Read(buf)
-		//if err!=nil{
-		//	fmt.Println("recv buf err:",err)
-		//	break
-		//}
-
 		//创建一个拆包解包的对象
 		dp := NewDataPack()
 		//读取客户端的MsgHead 二进制流，8个字节
@@ -149,6 +143,8 @@ func (c *Connection) Start() {
 	//启动从当前链接的写数据业务
 	go c.StartWriter()
 
+	//按照开发者传进来的，创建链接后需要调用的处理业务，执行对应的hook函数
+	c.TcpServer.CallOnConnStart(c)
 }
 
 //停止链接，结束当前链接的工作
@@ -158,6 +154,10 @@ func (c *Connection) Stop() {
 		return
 	}
 	c.IsClosed = true
+
+	//在链接关闭之前处理一些业务，调用hook函数
+	c.TcpServer.CallOnConnStop(c)
+
 	c.Conn.Close()
 
 	//告知Writer关闭
@@ -204,4 +204,39 @@ func (c *Connection) SendMsg(msgId uint32, data []byte) error {
 	//把消息发给管道
 	c.MsgChan <- msg
 	return nil
+}
+
+/*
+一些管理属性的方法
+*/
+//设置链接属性
+func (c *Connection) SetProperty(key string, value interface{}) {
+	c.protectLock.Lock()
+	defer c.protectLock.Unlock()
+
+	//添加一个属性
+	c.property[key] = value
+
+}
+
+//获取链接属性
+func (c *Connection) GetProperty(key string) (value interface{}, err error) {
+	c.protectLock.RLock()
+	defer c.protectLock.RUnlock()
+
+	value, ok := c.property[key]
+	if ok {
+		return value, nil
+	} else {
+		return nil, errors.New("no property FOUND!")
+	}
+
+}
+
+//移除链接属性
+func (c *Connection) RemoveProperty(key string) {
+	c.protectLock.Lock()
+	defer c.protectLock.Unlock()
+
+	delete(c.property, key)
 }

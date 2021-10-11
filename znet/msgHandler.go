@@ -11,7 +11,7 @@ import (
 消息处理模块的实现
 */
 type MsgHandle struct {
-	//存放每个msgIdsuo对应的处理方法
+	//存放每个msgId所对应的处理方法
 	Apis map[uint32]ziface.IRouter
 	//负责Worker取任务的消息队列
 	TaskQueue []chan ziface.IRequest
@@ -81,7 +81,7 @@ func (mh *MsgHandle) StarOneWorker(workerId int, taskQueue chan ziface.IRequest)
 
 }
 
-//将消息传递给TaskQueue，由Worker进行处理
+// SendMsgToTaskQueue 将消息传递给TaskQueue，由Worker进行处理
 func (mh *MsgHandle) SendMsgToTaskQueue(request ziface.IRequest) {
 	//1 将消息平均分配给不同的Worker
 	//根据客户端建立的ConnID分配
