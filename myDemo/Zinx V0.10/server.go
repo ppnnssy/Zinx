@@ -54,6 +54,7 @@ func DoConnBegin(conn ziface.IConnection) {
 
 }
 
+//结束后的钩子函数
 func DoConnLost(conn ziface.IConnection) {
 	fmt.Println("===>DoConnLost is Called!...")
 	fmt.Println("connId:", conn.GetConnID(), "is lost!")
@@ -67,6 +68,9 @@ func DoConnLost(conn ziface.IConnection) {
 	}
 
 }
+
+
+
 func main() {
 	//创建一个server句柄，使用Zinx的api
 	s := znet.NewServer("[zinx v0.7]") //新建了一个服务器，但是路由为空
@@ -79,7 +83,8 @@ func main() {
 	s.AddRouter(0, &PingRouter{})
 	//当用户发送id为1的消息，添加hellorouter
 	s.AddRouter(1, &HelloZinxRouter{})
-	//启动server
 
+
+	//启动server
 	s.Server()
 }

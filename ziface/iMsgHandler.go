@@ -5,6 +5,7 @@ type IMsgHandle interface {
 	DoMsgHandler(request IRequest)
 	//为消息添加对应的处理逻辑
 	AddRouter(msgId uint32, router IRouter)
+
 	//开启一个工作池
 	StarWorkerPool()
 	//发送request到消息队列

@@ -114,6 +114,25 @@ func (c *Connection) StartReader() {
 
 }
 
+//发送数据，将数据发送给客户端
+func (c *Connection) SendMsg(msgId uint32, data []byte) error {
+	if c.IsClosed == true {
+		return errors.New("conn closed when send msg")
+	}
+	//将data进行封包
+	dp := NewDataPack()
+
+	msg, err := dp.Pack(NewMsgPackage(msgId, data))
+	if err != nil {
+		fmt.Println("pack msg error,msgId:", msgId)
+		return errors.New("Pack error msg")
+	}
+
+	//把消息发给管道
+	c.MsgChan <- msg
+	return nil
+}
+
 //写消息的goroutine，专门发送给客户消息的方法
 func (c *Connection) StartWriter() {
 	fmt.Println("Writer Goroutine is running...")
@@ -134,13 +153,14 @@ func (c *Connection) StartWriter() {
 	}
 }
 
+
 //启动连接，让当前的连接准备工作
 func (c *Connection) Start() {
 	fmt.Println("Conn Start()...ConnID:", c.ConnID)
 	//启动从当前链接的读数据业务
 	go c.StartReader()
 
-	//启动从当前链接的写数据业务
+	//启动从当前链接的写数据业务。此处需要阻塞等待数据发过来。数据来自开发者自己写的Handle函数中的路由业务
 	go c.StartWriter()
 
 	//按照开发者传进来的，创建链接后需要调用的处理业务，执行对应的hook函数
@@ -187,24 +207,8 @@ func (c *Connection) RemoteAddr() net.Addr {
 	return c.Conn.RemoteAddr() //RemoteAddr returns the remote network address.
 }
 
-//发送数据，将数据发送给客户端
-func (c *Connection) SendMsg(msgId uint32, data []byte) error {
-	if c.IsClosed == true {
-		return errors.New("conn closed when send msg")
-	}
-	//将data进行封包
-	dp := NewDataPack()
 
-	msg, err := dp.Pack(NewMsgPackage(msgId, data))
-	if err != nil {
-		fmt.Println("pack msg error,msgId:", msgId)
-		return errors.New("Pack error msg")
-	}
 
-	//把消息发给管道
-	c.MsgChan <- msg
-	return nil
-}
 
 /*
 一些管理属性的方法

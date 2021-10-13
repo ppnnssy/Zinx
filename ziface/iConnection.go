@@ -17,6 +17,7 @@ type IConnection interface {
 	//发送数据，将数据发送给客户端
 	SendMsg(msgId uint32, data []byte) error
 
+
 	//设置链接属性
 	SetProperty(key string, value interface{})
 	//获取链接属性

@@ -19,6 +19,7 @@ type MsgHandle struct {
 	WorkerPoolSize uint32
 }
 
+
 //初始化
 func NewMsgHandle() *MsgHandle {
 	return &MsgHandle{
@@ -28,6 +29,7 @@ func NewMsgHandle() *MsgHandle {
 		WorkerPoolSize: utils.GlobalObject.WorkerPoolSize,
 	}
 }
+
 
 //调度、执行对应的Router消息处理方法
 func (mh *MsgHandle) DoMsgHandler(request ziface.IRequest) {
